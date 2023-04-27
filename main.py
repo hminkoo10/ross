@@ -671,18 +671,21 @@ class bcmenu(discord.ui.View):
 
     @discord.ui.button(label="다이스 채널 생성",style=discord.ButtonStyle.red,custom_id="dice:cc")
     async def dchannel_create(self,inter,button):
+        for i in list(dc.values()):
+            if inter.user.id in i["owner"] and i["disabled"] == False:
+                return await inter.response.send_message(embed=dembed("채널 생성 실패","이미 만든 채널이 있습니다"))
         cg = discord.utils.get(inter.guild.categories, id=다이스카테고리)
         channel = await inter.guild.create_text_channel(name=f'다이스 #{len(ic.keys())+1}', category=cg)
         dc[str(channel.id)] = {"name":f'다이스 #{len(dc.keys())+1}',"owner":inter.user.id,"bet":1000,"disabled":False,"users":[inter.user.id]}
         await inter.response.send_message(f"<#{channel.id}>로 이동하세요",ephemeral=True)
 
-    @discord.ui.button(label="인디언 포커 채널 참가",style=discord.ButtonStyle.green,custom_id="bcmenu:cj")
+    #@discord.ui.button(label="인디언 포커 채널 참가",style=discord.ButtonStyle.green,custom_id="bcmenu:cj")
     async def ichannel_join(self,inter,button):
         if len(list(ic.keys())) == 0:
             return await inter.response.send_message(embed=dembed("채널 참가 실패","입장 가능한 방이 없습니다"),ephemeral=True)
         await inter.response.send_message("채널 참가",view=ipokerselect(),ephemeral=True)
 
-    @discord.ui.button(label="인디언 포커 채널 생성",style=discord.ButtonStyle.red,custom_id="bcmenu_cc")
+    #@discord.ui.button(label="인디언 포커 채널 생성",style=discord.ButtonStyle.red,custom_id="bcmenu_cc")
     async def ichannel_create(self,inter,button):
         cg = discord.utils.get(inter.guild.categories, id=인디언포커카테고리)
         channel = await inter.guild.create_text_channel(name=f'인디언 포커 #{len(ic.keys())+1}', category=cg)
