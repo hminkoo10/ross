@@ -629,19 +629,22 @@ class dsm(discord.ui.Select):
     def __init__(self):
         options = []
         a = 0
-        for i in dc:
+        for i in list(dc.values()):
             a += 1
-            options.append(discord.SelectOption(label=f'다이스 #{a}', description=f"{i}\n배팅금 : 1000원", emoji='📥'))
+            owner = bot.get_user(i["owner"])
+            options.append(discord.SelectOption(label=i["name"], description=f"방장 : {owner}\n배팅금 : {i['bet']}원", emoji='📥'))
         super().__init__(placeholder='입장하실 채널을 선택해주세요', min_values=1, max_values=1, options=options)
 
     async def callback(self, interaction: discord.Interaction):
-        await interaction.response.send_message(f'{self.values[0]}채널에 입장하셨습니다',ephemeral=True)
+        c = discord.utils.get(interaction.guild.channels,name=f"다이스-{self.values[0].split('#')[1]}")
+        await interaction.response.send_message(f'<#{c.id}>채널에 입장하셨습니다',ephemeral=True)
 
 class diceselect(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
         self.add_item(dsm())
 
+"""
 class ism(discord.ui.Select):
     def __init__(self):
         options = []
@@ -659,6 +662,8 @@ class ipokerselect(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
         self.add_item(ism())
+"""
+
 
 class bcmenu(discord.ui.View):
     def __init__(self):
@@ -672,14 +677,24 @@ class bcmenu(discord.ui.View):
     @discord.ui.button(label="다이스 채널 생성",style=discord.ButtonStyle.red,custom_id="dice:cc")
     async def dchannel_create(self,inter,button):
         for i in list(dc.values()):
-            if inter.user.id in i["owner"] and i["disabled"] == False:
-                return await inter.response.send_message(embed=dembed("채널 생성 실패","이미 만든 채널이 있습니다"))
+            if inter.user.id == i["owner"] and i["disabled"] == False:
+                return await inter.response.send_message(embed=dembed("채널 생성 실패","이미 만든 채널이 있습니다"),ephemeral=True)
         cg = discord.utils.get(inter.guild.categories, id=다이스카테고리)
-        channel = await inter.guild.create_text_channel(name=f'다이스 #{len(ic.keys())+1}', category=cg)
-        dc[str(channel.id)] = {"name":f'다이스 #{len(dc.keys())+1}',"owner":inter.user.id,"bet":1000,"disabled":False,"users":[inter.user.id]}
+        overwrites = {inter.guild.default_role: discord.PermissionOverwrite(view_channel=False,send_messages=False),
+            inter.guild.me: discord.PermissionOverwrite(view_channel=True,read_messages=True,send_messages=True),
+            inter.user: discord.PermissionOverwrite(view_channel=True,read_messages=True,send_messages=True)}
+        channel = await inter.guild.create_text_channel(name=f'다이스 #{len(dc.keys())+1}', category=cg,overwrites=overwrites)
         await inter.response.send_message(f"<#{channel.id}>로 이동하세요",ephemeral=True)
-
-    #@discord.ui.button(label="인디언 포커 채널 참가",style=discord.ButtonStyle.green,custom_id="bcmenu:cj")
+        while True:
+            try:
+                cn = discord.utils.get(inter.guild.channels,name=f'다이스-{len(dc.keys())+1}')
+                if cn.id != channel.id:
+                    await cn.delete()
+            except:
+                break
+        dc[str(channel.id)] = {"name":f'다이스 #{len(dc.keys())+1}',"owner":inter.user.id,"bet":1000,"disabled":False,"users":[inter.user.id]}
+"""
+    @discord.ui.button(label="인디언 포커 채널 참가",style=discord.ButtonStyle.green,custom_id="bcmenu:cj")
     async def ichannel_join(self,inter,button):
         if len(list(ic.keys())) == 0:
             return await inter.response.send_message(embed=dembed("채널 참가 실패","입장 가능한 방이 없습니다"),ephemeral=True)
@@ -692,7 +707,7 @@ class bcmenu(discord.ui.View):
         ic[str(channel.id)] = {"name":f'인디언 포커 #{len(ic.keys())+1}',"owner":inter.user.id,"bet":1000,"disabled":False,"users":[inter.user.id]}
         print(ic)
         await inter.response.send_message(f"<#{channel.id}>로 이동하세요",ephemeral=True)
-
+"""
 
 
 @bot.hybrid_command(name="배팅채널메뉴",description="관리자 전용 커맨드입니다.",with_app_command=True)
