@@ -1,7 +1,7 @@
 import os
 import discord
 from discord.ext import commands
-import datetime,time,json,requests,sys,os,pytz,jishaku
+import datetime,time,json,sys,os,pytz,jishaku
 import random
 import asyncio
 from setting import *
@@ -32,8 +32,6 @@ bot = Bot()
 pu = {}
 pn = {}
 inj = {}
-dc = {}
-ic = {}
 
 def jload(fn):
     jstring = open(path + fn, "r", encoding='utf-8-sig').read()
@@ -82,12 +80,12 @@ async def 가입(ctx):
         timee = datetime.datetime.now().timestamp()
         timee = str(timee).split(".")[0]
         userdb[user] = {"money":int(축하금),"time":timee}
-        embed = discord.Embed(description=f"가입 성공! 가입 축하금으로 {축하금}원을 보내드렸어요!",color=0xd8b0cc,timestamp=datetime.datetime.now(pytz.timezone('UTC')))
+        embed = discord.Embed(description=f"가입 성공! 가입 축하금으로 {축하금}캐시을 보내드렸어요!",color=0xd8b0cc,timestamp=datetime.datetime.now(pytz.timezone('UTC')))
         try:
             embed.set_author(name="BANK | Join", icon_url=ctx.author.avatar.url)
         except:
             embed.set_author(name="BANK | Join")
-        embed.add_field(name=f"돈", value=f"**{축하금}원**", inline=True)
+        embed.add_field(name=f"돈", value=f"**{축하금}캐시**", inline=True)
         embed.add_field(name=f"가입 시간", value=f"<t:{timee}:F>", inline=True)
         await ctx.reply(embed=embed)
         jsave("db.json",userdb)
@@ -106,7 +104,7 @@ async def 송금(ctx,user:discord.Member,amount:int):
     elif userdb[str(ctx.author.id)]["money"] < amount or str(userdb[str(ctx.author.id)]["money"]) == "0":
         return await ctx.reply(embed=dembed("송금 실패","자신이 가신 돈보다 큰 금액은 송금이 불가능합니다.",discord.Color.red()))
     elif amount < 500:
-        return await ctx.reply(embed=dembed("송금 실패","최소 송금 금액은 500원입니다.",discord.Color.red()))
+        return await ctx.reply(embed=dembed("송금 실패","최소 송금 금액은 500캐시입니다.",discord.Color.red()))
     elif user == ctx.author:
         return await ctx.reply(embed=dembed("송금 실패","자신에게는 송금할 수 없습니다.",discord.Color.red()))
     su = user
@@ -125,7 +123,7 @@ async def 송금(ctx,user:discord.Member,amount:int):
     uinf = userdb[str(su.id)]
     money = userdb[str(su.id)]["money"]
     time = uinf["time"]
-    embed = discord.Embed(title="입금 안내",description=f"{ctx.author}님이 당신에게 {amount}원을 송금하셨습니다!",color=random.randint(0x000000,0xFFFFFF),timestamp=datetime.datetime.now(pytz.timezone('UTC')))
+    embed = discord.Embed(title="입금 안내",description=f"{ctx.author}님이 당신에게 {amount}캐시을 송금하셨습니다!",color=random.randint(0x000000,0xFFFFFF),timestamp=datetime.datetime.now(pytz.timezone('UTC')))
     try:
         embed.set_author(name="BANK | Remit", icon_url=su.avatar.url)
     except:
@@ -134,14 +132,14 @@ async def 송금(ctx,user:discord.Member,amount:int):
     embed.add_field(name=f"가입 시간", value=f"<t:{time}:F>", inline=True)
     nowtime = datetime.datetime.now()
     if not str(ctx.author.id) in userdb.keys():
-        lsave(f"log/{ctx.author.id}.txt",f"[ 송금 ]\n\n{ctx.author}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {amount}원을 {su}({su.id})님에게 송금하셨습니다\n",ctx)
+        lsave(f"log/{ctx.author.id}.txt",f"[ 송금 ]\n\n{ctx.author}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {amount}캐시을 {su}({su.id})님에게 송금하셨습니다\n",ctx)
     else:
-        l = f"[ 송금 ]\n\n{ctx.author}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {amount}원을 {su}({su.id})님에게 송금하셨습니다\n"
+        l = f"[ 송금 ]\n\n{ctx.author}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {amount}캐시을 {su}({su.id})님에게 송금하셨습니다\n"
         lsave(f"log/{ctx.author.id}.txt",l,ctx)
     if not str(su.id) in userdb.keys():
-        lsave(f"log/{su.id}.txt",f"[ 송금 ]\n\n{su}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {amount}원을 {ctx.author}({ctx.author.id})님에게 받았습니다\n",ctx)
+        lsave(f"log/{su.id}.txt",f"[ 송금 ]\n\n{su}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {amount}캐시을 {ctx.author}({ctx.author.id})님에게 받았습니다\n",ctx)
     else:
-        l = f"[ 송금 ]\n\n{su}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {amount}원을 {ctx.author}({ctx.author.id})님에게 받았습니다\n"
+        l = f"[ 송금 ]\n\n{su}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {amount}캐시을 {ctx.author}({ctx.author.id})님에게 받았습니다\n"
         lsave(f"log/{su.id}.txt",l,ctx)
     await su.send(embed=embed)
     userdb[str(su.id)]["money"] = userdb[str(su.id)]["money"] + amount
@@ -190,7 +188,7 @@ async def 돈설정(ctx, user:discord.Member, amount:int):
     jsave("db.json",userdb)
     await ctx.reply(embed=embed)
     nowtime = datetime.datetime.now()
-    lsave(f"log/{user.id}.txt",f"[ 조회 ]\n\n{user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {ctx.author}관리자님이 {user}님의 돈을 {money}원에서 {amount}원으로 돈을 설정하셨습니다\n",ctx)
+    lsave(f"log/{user.id}.txt",f"[ 조회 ]\n\n{user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {ctx.author}관리자님이 {user}님의 돈을 {money}캐시에서 {amount}캐시으로 돈을 설정하셨습니다\n",ctx)
 
 @bot.hybrid_command(name="강제충전",description="관리자 전용 커맨드입니다.",with_app_command=True)
 @commands.is_owner()
@@ -214,7 +212,7 @@ async def 강제충전(ctx, user:discord.Member, amount:int):
     jsave("db.json",userdb)
     await ctx.reply(embed=embed)
     nowtime = datetime.datetime.now()
-    lsave(f"log/{user.id}.txt",f"[ 강제충전 ]\n\n{user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {ctx.author}관리자님이 {amount}원을 강제로 충전해주셨습니다\n",ctx)
+    lsave(f"log/{user.id}.txt",f"[ 강제충전 ]\n\n{user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {ctx.author}관리자님이 {amount}캐시을 강제로 충전해주셨습니다\n",ctx)
 
 class updown(discord.ui.Modal,title="업다운 게임"):
     answer = discord.ui.TextInput(label="베팅할 금액을 입력해주세요",style=discord.TextStyle.short,placeholder="1000",required=True,max_length=10)
@@ -227,7 +225,7 @@ class updown(discord.ui.Modal,title="업다운 게임"):
         except:
             pass
         if int(str(self.answer)) < 1000:
-            return await ctx.response.send_message(embed=dembed("경고","최소 배팅 금액은 1000원 입니다.",discord.Color.red()))
+            return await ctx.response.send_message(embed=dembed("경고","최소 배팅 금액은 1000캐시 입니다.",discord.Color.red()))
         if userdb[str(ctx.author.id)]["money"] < int(str(self.answer)):
             return await ctx.response.send_message(embed=dembed("경고","자기 돈보다 높은 금액을 배팅하셨습니다.",discord.Color.red()))
         pu[str(ctx.author.id)] = True
@@ -261,9 +259,9 @@ class updown(discord.ui.Modal,title="업다운 게임"):
                     jsave("banking.json",userdb)
                     nowtime = datetime.datetime.now()
                     if not str(user.id) in userdb.keys():
-                        lsave(f"log/{ctx.author.id}.txt",f"업다운게임 : {ctx.author}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {self.answer}원을 업다운게임에서 잃으셨습니다",ctx)
+                        lsave(f"log/{ctx.author.id}.txt",f"업다운게임 : {ctx.author}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {self.answer}캐시을 업다운게임에서 잃으셨습니다",ctx)
                     else:
-                        l = f"업다운게임 : {ctx.author}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {self.answer}원을 업다운게임에서 잃으셨습니다"
+                        l = f"업다운게임 : {ctx.author}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {self.answer}캐시을 업다운게임에서 잃으셨습니다"
                         lsave(f"log/{ctx.author.id}.txt",l,ctx)
                     return await ctx.channel.send(embed=embed)
                 await msg.delete()
@@ -294,9 +292,9 @@ class updown(discord.ui.Modal,title="업다운 게임"):
                     jsave("banking.json",userdb)
                     nowtime = datetime.datetime.now()
                     if not str(user.id) in userdb.keys():
-                        lsave(f"log/{ctx.author.id}.txt",f"업다운게임 : {ctx.author}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {self.answer}원을 1.99배인 {round(float(str(self.answer)) * 1.99)}원을 늘렸습니다.",ctx)
+                        lsave(f"log/{ctx.author.id}.txt",f"업다운게임 : {ctx.author}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {self.answer}캐시을 1.99배인 {round(float(str(self.answer)) * 1.99)}캐시을 늘렸습니다.",ctx)
                     else:
-                        l = f"업다운게임 : {ctx.author}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {self.answer}원을 1.99배인 {round(float(str(self.answer)) * 1.99)}원으로 뿔리셨습니다"
+                        l = f"업다운게임 : {ctx.author}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {self.answer}캐시을 1.99배인 {round(float(str(self.answer)) * 1.99)}캐시으로 뿔리셨습니다"
                         lsave(f"log/{ctx.author.id}.txt",l,ctx)
                     return await ctx.channel.send(embed=embed)
                 elif int(msg.content) > rn:
@@ -321,9 +319,9 @@ class updown(discord.ui.Modal,title="업다운 게임"):
                         jsave("banking.json",userdb)
                         nowtime = datetime.datetime.now()
                         if not str(user.id) in userdb.keys():
-                            lsave(f"log/{ctx.author.id}.txt",f"업다운게임 : {ctx.author}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {self.answer}원을 업다운게임에서 잃으셨습니다",ctx)
+                            lsave(f"log/{ctx.author.id}.txt",f"업다운게임 : {ctx.author}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {self.answer}캐시을 업다운게임에서 잃으셨습니다",ctx)
                         else:
-                            l = f"업다운게임 : {ctx.author}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {self.answer}원을 업다운게임에서 잃으셨습니다"
+                            l = f"업다운게임 : {ctx.author}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {self.answer}캐시을 업다운게임에서 잃으셨습니다"
                             lsave(f"log/{ctx.author.id}.txt",l,ctx)
                         return await ctx.channel.send(embed=embed)
                     await ctx.channel.send(embed = dembed("다운!",f"기회가 {i}번 남음.\n[입력한 수 : {msg.content}]"),delete_after=15)
@@ -349,9 +347,9 @@ class updown(discord.ui.Modal,title="업다운 게임"):
                         jsave("banking.json",userdb)
                         nowtime = datetime.datetime.now()
                         if not str(user.id) in userdb.keys():
-                            lsave(f"log/{ctx.author.id}.txt",f"업다운게임 : {ctx.author}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {self.answer}원을 업다운게임에서 잃으셨습니다",ctx)
+                            lsave(f"log/{ctx.author.id}.txt",f"업다운게임 : {ctx.author}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {self.answer}캐시을 업다운게임에서 잃으셨습니다",ctx)
                         else:
-                            l = f"업다운게임 : {ctx.author}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {self.answer}원을 업다운게임에서 잃으셨습니다"
+                            l = f"업다운게임 : {ctx.author}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {self.answer}캐시을 업다운게임에서 잃으셨습니다"
                             lsave(f"log/{ctx.author.id}.txt",l,ctx)
                         return await ctx.channel.send(embed=embed)
                     await ctx.channel.send(embed = dembed("업!",f"기회가 {i}번 남음.\n[입력한 수 : {msg.content}]"),delete_after=15)
@@ -377,7 +375,7 @@ class baccarat(discord.ui.View):
                 player = random.randint(0,9)
                 userdb = jload("banking.json")
                 if int(str(self.answer)) < 1000:
-                    return await ctx.response.send_message(embed=dembed("경고","최소 배팅 금액은 1000원 입니다.",discord.Color.red()))
+                    return await ctx.response.send_message(embed=dembed("경고","최소 배팅 금액은 1000캐시 입니다.",discord.Color.red()))
                 if userdb[str(ctx.author.id)]["money"] < int(str(self.answer)):
                     return await ctx.response.send_message(embed=dembed("경고","자기 돈보다 높은 금액을 배팅하셨습니다.",discord.Color.red()))
                 if banker == player:
@@ -401,9 +399,9 @@ class baccarat(discord.ui.View):
                     jsave("banking.json",userdb)
                     nowtime = datetime.datetime.now()
                     if not str(user.id) in userdb.keys():
-                        lsave(f"log/{user.id}.txt",f"바카라 : {user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {self.answer}원을 6.98배인 {round(float(str(self.answer)) * 6.98)}원으로 뿔리셨습니다",ctx)
+                        lsave(f"log/{user.id}.txt",f"바카라 : {user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {self.answer}캐시을 6.98배인 {round(float(str(self.answer)) * 6.98)}캐시으로 뿔리셨습니다",ctx)
                     else:
-                        l = f"바카라 : {user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {self.answer}원을 6.98배인 {round(float(str(self.answer)) * 6.98)}원으로 뿔리셨습니다"
+                        l = f"바카라 : {user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {self.answer}캐시을 6.98배인 {round(float(str(self.answer)) * 6.98)}캐시으로 뿔리셨습니다"
                         lsave(f"log/{user.id}.txt",l,ctx)
                     return await ctx.response.send_message(embed=embed)
                 else:
@@ -427,9 +425,9 @@ class baccarat(discord.ui.View):
                     jsave("banking.json",userdb)
                     nowtime = datetime.datetime.now()
                     if not str(user.id) in userdb.keys():
-                        lsave(f"log/{user.id}.txt",f"바카라 : {user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {answer}원을 바카라에서 잃으셨습니다",ctx)
+                        lsave(f"log/{user.id}.txt",f"바카라 : {user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {answer}캐시을 바카라에서 잃으셨습니다",ctx)
                     else:
-                        l = f"바카라 : {user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {answer}원을 바카라에서 잃으셨습니다"
+                        l = f"바카라 : {user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {answer}캐시을 바카라에서 잃으셨습니다"
                         lsave(f"log/{user.id}.txt",l,ctx)
                     return await ctx.response.send_message(embed=embed)
         await inter.response.send_modal(baccarat_())
@@ -442,7 +440,7 @@ class baccarat(discord.ui.View):
                 player = random.randint(0,9)
                 userdb = jload("banking.json")
                 if int(str(self.answer)) < 1000:
-                    return await ctx.response.send_message(embed=dembed("경고","최소 배팅 금액은 1000원 입니다.",discord.Color.red()))
+                    return await ctx.response.send_message(embed=dembed("경고","최소 배팅 금액은 1000캐시 입니다.",discord.Color.red()))
                 if userdb[str(ctx.author.id)]["money"] < int(str(self.answer)):
                     return await ctx.response.send_message(embed=dembed("경고","자기 돈보다 높은 금액을 배팅하셨습니다.",discord.Color.red()))
                 if banker < player:
@@ -466,9 +464,9 @@ class baccarat(discord.ui.View):
                     jsave("banking.json",userdb)
                     nowtime = datetime.datetime.now()
                     if not str(user.id) in userdb.keys():
-                        lsave(f"log/{user.id}.txt",f"바카라 : {user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {self.answer}원을 1.98배인 {round(float(str(self.answer)) * 1.98)}원으로 뿔리셨습니다",ctx)
+                        lsave(f"log/{user.id}.txt",f"바카라 : {user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {self.answer}캐시을 1.98배인 {round(float(str(self.answer)) * 1.98)}캐시으로 뿔리셨습니다",ctx)
                     else:
-                        l = f"바카라 : {user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {self.answer}원을 1.98배인 {round(float(str(self.answer)) * 1.98)}원으로 뿔리셨습니다"
+                        l = f"바카라 : {user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {self.answer}캐시을 1.98배인 {round(float(str(self.answer)) * 1.98)}캐시으로 뿔리셨습니다"
                         lsave(f"log/{user.id}.txt",l,ctx)
                     return await ctx.response.send_message(embed=embed)
                 else:
@@ -490,9 +488,9 @@ class baccarat(discord.ui.View):
                         embed.add_field(name=f"가입 시간", value=f"<t:{time}:F>", inline=True)
                         nowtime = datetime.datetime.now()
                         if not str(user.id) in userdb.keys():
-                            lsave(f"log/{user.id}.txt",f"바카라 : {user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {self.answer}원을 배팅했지만 무승부로 돌려받으셨습니다",ctx)
+                            lsave(f"log/{user.id}.txt",f"바카라 : {user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {self.answer}캐시을 배팅했지만 무승부로 돌려받으셨습니다",ctx)
                         else:
-                            l = f"바카라 : {user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {self.answer}원을 배팅했지만 무승부로 돌려받으셨습니다"
+                            l = f"바카라 : {user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {self.answer}캐시을 배팅했지만 무승부로 돌려받으셨습니다"
                             lsave(f"log/{user.id}.txt",l,ctx)
                         return await ctx.response.send_message(embed=embed)
                     user = inter.user
@@ -515,9 +513,9 @@ class baccarat(discord.ui.View):
                     jsave("banking.json",userdb)
                     nowtime = datetime.datetime.now()
                     if not str(user.id) in userdb.keys():
-                        lsave(f"log/{user.id}.txt",f"바카라 : {user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {answer}원을 바카라에서 잃으셨습니다",ctx)
+                        lsave(f"log/{user.id}.txt",f"바카라 : {user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {answer}캐시을 바카라에서 잃으셨습니다",ctx)
                     else:
-                        l = f"바카라 : {user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {answer}원을 바카라에서 잃으셨습니다"
+                        l = f"바카라 : {user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {answer}캐시을 바카라에서 잃으셨습니다"
                         lsave(f"log/{user.id}.txt",l,ctx)
                     return await ctx.response.send_message(embed=embed)
         await inter.response.send_modal(baccarat_())
@@ -530,7 +528,7 @@ class baccarat(discord.ui.View):
                 player = random.randint(0,9)
                 userdb = jload("banking.json")
                 if int(str(self.answer)) < 1000:
-                    return await ctx.response.send_message(embed=dembed("경고","최소 배팅 금액은 1000원 입니다.",discord.Color.red()))
+                    return await ctx.response.send_message(embed=dembed("경고","최소 배팅 금액은 1000캐시 입니다.",discord.Color.red()))
                 if userdb[str(ctx.author.id)]["money"] < int(str(self.answer)):
                     return await ctx.response.send_message(embed=dembed("경고","자기 돈보다 높은 금액을 배팅하셨습니다.",discord.Color.red()))
                 if banker > player:
@@ -554,9 +552,9 @@ class baccarat(discord.ui.View):
                     jsave("banking.json",userdb)
                     nowtime = datetime.datetime.now()
                     if not str(user.id) in userdb.keys():
-                        lsave(f"log/{user.id}.txt",f"바카라 : {user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {self.answer}원을 1.8배인 {round(float(str(self.answer)) * 1.8)}원으로 뿔리셨습니다",ctx)
+                        lsave(f"log/{user.id}.txt",f"바카라 : {user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {self.answer}캐시을 1.8배인 {round(float(str(self.answer)) * 1.8)}캐시으로 뿔리셨습니다",ctx)
                     else:
-                        l = f"바카라 : {user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {self.answer}원을 1.8배인 {round(float(str(self.answer)) * 1.8)}원으로 뿔리셨습니다"
+                        l = f"바카라 : {user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {self.answer}캐시을 1.8배인 {round(float(str(self.answer)) * 1.8)}캐시으로 뿔리셨습니다"
                         lsave(f"log/{user.id}.txt",l,ctx)
                     return await ctx.response.send_message(embed=embed)
                 else:
@@ -578,9 +576,9 @@ class baccarat(discord.ui.View):
                         embed.add_field(name=f"가입 시간", value=f"<t:{time}:F>", inline=True)
                         nowtime = datetime.datetime.now()
                         if not str(user.id) in userdb.keys():
-                            lsave(f"log/{user.id}.txt",f"바카라 : {user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {self.answer}원을 배팅했지만 무승부로 돌려받으셨습니다",ctx)
+                            lsave(f"log/{user.id}.txt",f"바카라 : {user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {self.answer}캐시을 배팅했지만 무승부로 돌려받으셨습니다",ctx)
                         else:
-                            l = f"바카라 : {user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {self.answer}원을 배팅했지만 무승부로 돌려받으셨습니다"
+                            l = f"바카라 : {user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {self.answer}캐시을 배팅했지만 무승부로 돌려받으셨습니다"
                             lsave(f"log/{user.id}.txt",l,ctx)
                         return await ctx.response.send_message(embed=embed)
                     user = inter.user
@@ -603,9 +601,9 @@ class baccarat(discord.ui.View):
                     jsave("banking.json",userdb)
                     nowtime = datetime.datetime.now()
                     if not str(user.id) in userdb.keys():
-                        lsave(f"log/{user.id}.txt",f"바카라 : {user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {answer}원을 바카라에서 잃으셨습니다",ctx)
+                        lsave(f"log/{user.id}.txt",f"바카라 : {user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {answer}캐시을 바카라에서 잃으셨습니다",ctx)
                     else:
-                        l = f"바카라 : {user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {answer}원을 바카라에서 잃으셨습니다"
+                        l = f"바카라 : {user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {answer}캐시을 바카라에서 잃으셨습니다"
                         lsave(f"log/{user.id}.txt",l,ctx)
                     return await ctx.response.send_message(embed=embed)
         await inter.response.send_modal(baccarat_())
@@ -627,16 +625,29 @@ async def 로그(ctx,user:discord.Member):
 
 class dsm(discord.ui.Select):
     def __init__(self):
+        dc = jload("dice.json")
         options = []
         a = 0
         for i in list(dc.values()):
             a += 1
             owner = bot.get_user(i["owner"])
-            options.append(discord.SelectOption(label=i["name"], description=f"방장 : {owner}\n배팅금 : {i['bet']}원", emoji='📥'))
+            if i["disabled"] == True:
+                continue
+            options.append(discord.SelectOption(label=i["name"], description=f"방장 : {owner}\n배팅금 : {i['bet']}캐시", emoji='📥'))
         super().__init__(placeholder='입장하실 채널을 선택해주세요', min_values=1, max_values=1, options=options)
 
     async def callback(self, interaction: discord.Interaction):
+        dc = jload("dice.json")
         c = discord.utils.get(interaction.guild.channels,name=f"다이스-{self.values[0].split('#')[1]}")
+        if interaction.user.id in dc[str(c.id)]["users"]:
+            return await interaction.response.send_message("이미 이 방에 들어가있습니다",ephemeral=True)
+        if dc[str(c.id)]["disabled"] == True or len(dc[str(c.id)]["users"]) >= 2:
+            dc[str(c.id)]["disabled"] = True
+            jsave("dice.json",dc)
+            return await interaction.response.send_message("이미 방이 꽉 찼습니다",ephemeral=True)
+        await c.set_permissions(interaction.user, send_messages=False,view_channel=True)
+        dc[str(c.id)]["users"].append(interaction.id)
+        jsave("dice.json",dc)
         await interaction.response.send_message(f'<#{c.id}>채널에 입장하셨습니다',ephemeral=True)
 
 class diceselect(discord.ui.View):
@@ -652,7 +663,7 @@ class ism(discord.ui.Select):
         for i in list(ic.values()):
             a += 1
             owner = bot.get_user(i["owner"])
-            options.append(discord.SelectOption(label=i["name"], description=f"방장 : {owner}\n배팅금 : {i['bet']}원", emoji='📥'))
+            options.append(discord.SelectOption(label=i["name"], description=f"방장 : {owner}\n배팅금 : {i['bet']}캐시", emoji='📥'))
         super().__init__(placeholder='입장하실 채널을 선택해주세요', min_values=1, max_values=1, options=options)
 
     async def callback(self, interaction: discord.Interaction):
@@ -670,29 +681,30 @@ class bcmenu(discord.ui.View):
         super().__init__(timeout=None)
     @discord.ui.button(label="다이스 채널 참가",style=discord.ButtonStyle.green,custom_id="dice:cj")
     async def dchannel_join(self,inter,button):
+        dc = jload("dice.json")
         if len(list(dc.keys())) == 0:
             return await inter.response.send_message(embed=dembed("채널 참가 실패","입장 가능한 방이 없습니다"),ephemeral=True)
         await inter.response.send_message("채널 참가",view=diceselect(),ephemeral=True)
 
     @discord.ui.button(label="다이스 채널 생성",style=discord.ButtonStyle.red,custom_id="dice:cc")
     async def dchannel_create(self,inter,button):
+        dc = jload("dice.json")
         for i in list(dc.values()):
             if inter.user.id == i["owner"] and i["disabled"] == False:
                 return await inter.response.send_message(embed=dembed("채널 생성 실패","이미 만든 채널이 있습니다"),ephemeral=True)
         cg = discord.utils.get(inter.guild.categories, id=다이스카테고리)
         overwrites = {inter.guild.default_role: discord.PermissionOverwrite(view_channel=False,send_messages=False),
             inter.guild.me: discord.PermissionOverwrite(view_channel=True,read_messages=True,send_messages=True),
-            inter.user: discord.PermissionOverwrite(view_channel=True,read_messages=True,send_messages=True)}
+            inter.user: discord.PermissionOverwrite(view_channel=True,read_messages=True,send_messages=False)}
         channel = await inter.guild.create_text_channel(name=f'다이스 #{len(dc.keys())+1}', category=cg,overwrites=overwrites)
         await inter.response.send_message(f"<#{channel.id}>로 이동하세요",ephemeral=True)
-        while True:
-            try:
-                cn = discord.utils.get(inter.guild.channels,name=f'다이스-{len(dc.keys())+1}')
-                if cn.id != channel.id:
-                    await cn.delete()
-            except:
-                break
+        for i in inter.guild.channels:
+            if i.name == f'다이스-{len(dc.keys())+1}':
+                if i.id != channel.id:
+                    await i.delete()
         dc[str(channel.id)] = {"name":f'다이스 #{len(dc.keys())+1}',"owner":inter.user.id,"bet":1000,"disabled":False,"users":[inter.user.id]}
+        jsave("dice.json",dc)
+
 """
     @discord.ui.button(label="인디언 포커 채널 참가",style=discord.ButtonStyle.green,custom_id="bcmenu:cj")
     async def ichannel_join(self,inter,button):
