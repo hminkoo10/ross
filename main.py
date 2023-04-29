@@ -641,10 +641,10 @@ class dsm(discord.ui.Select):
         c = discord.utils.get(interaction.guild.channels,name=f"다이스-{self.values[0].split('#')[1]}")
         if interaction.user.id in dc[str(c.id)]["users"]:
             return await interaction.response.send_message("이미 이 방에 들어가있습니다",ephemeral=True)
-        if dc[str(c.id)]["disabled"] == True or len(dc[str(c.id)]["users"]) >= 2:
-            dc[str(c.id)]["disabled"] = True
-            jsave("dice.json",dc)
+        if len(dc[str(c.id)]["users"]) >= 2:
             return await interaction.response.send_message("이미 방이 꽉 찼습니다",ephemeral=True)
+        elif dc[str(c.id)]["disabled"] == True:
+            return await interaction.response.send_message("닫힌 방입니다",ephemeral=True)
         await c.set_permissions(interaction.user, send_messages=False,view_channel=True)
         dc[str(c.id)]["users"].append(interaction.id)
         jsave("dice.json",dc)
@@ -675,6 +675,28 @@ class ipokerselect(discord.ui.View):
         self.add_item(ism())
 """
 
+class dcplay(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+    @discord.ui.button(label="채널 닫기",style=discord.ButtonStyle.red)
+    async def close_dccn(self,inter,button):
+        dc = jload("dice.json")
+        if inter.user.id != dc[str(inter.channel.id)]["owner"]:
+            return await inter.response.send_message("방은 방장만 닫을 수 있습니다",ephemeral=True)
+        dc[str(inter.channel.id)]["disabled"] = True
+        jsave("dice.json",dc)
+        await inter.response.send_message(embed=dembed("채널 삭제","채널이 3초 후에 삭제됩니다"))
+        await asyncio.sleep(3)
+        await inter.channel.delete()
+
+    @discord.ui.button(label="채널 나가기",style=discord.ButtonStyle.gray)
+    async def leave_dccn(self,inter,button):
+        dc = jload("dice.json")
+        if inter.user.id == dc[str(inter.channel.id)]["owner"]:
+            return await inter.response.send_message("방장은 채널을 나가려면 채널 닫기 버튼을 눌러주세요",ephemeral=True)
+        await inter.channel.send(f"{inter.user.mention}님이 채널을 나갔습니다",delete_after=10)
+        await inter.channel.set_permissions(inter.user, send_messages=False,view_channel=False)
+        
 
 class bcmenu(discord.ui.View):
     def __init__(self):
@@ -682,8 +704,16 @@ class bcmenu(discord.ui.View):
     @discord.ui.button(label="다이스 채널 참가",style=discord.ButtonStyle.green,custom_id="dice:cj")
     async def dchannel_join(self,inter,button):
         dc = jload("dice.json")
-        if len(list(dc.keys())) == 0:
+        a = 0
+        for i in list(dc.values()):
+            if i["disabled"] == True:
+                continue
+            a += 1
+        if len(list(dc.keys())) == 0 or a == 0:
             return await inter.response.send_message(embed=dembed("채널 참가 실패","입장 가능한 방이 없습니다"),ephemeral=True)
+        for i in list(dc.values()):
+            if inter.user.id in i["users"] and i["disabled"] == False:
+                return await inter.response.send_message(embed=dembed("채널 참가 실패","이미 다른 방에 들어가있습니다"),ephemeral=True)
         await inter.response.send_message("채널 참가",view=diceselect(),ephemeral=True)
 
     @discord.ui.button(label="다이스 채널 생성",style=discord.ButtonStyle.red,custom_id="dice:cc")
@@ -692,11 +722,15 @@ class bcmenu(discord.ui.View):
         for i in list(dc.values()):
             if inter.user.id == i["owner"] and i["disabled"] == False:
                 return await inter.response.send_message(embed=dembed("채널 생성 실패","이미 만든 채널이 있습니다"),ephemeral=True)
+        for i in list(dc.values()):
+            if inter.user.id in i["users"] and i["disabled"] == False:
+                return await inter.response.send_message(embed=dembed("채널 참가 실패","이미 다른 방에 들어가있습니다"),ephemeral=True)
         cg = discord.utils.get(inter.guild.categories, id=다이스카테고리)
         overwrites = {inter.guild.default_role: discord.PermissionOverwrite(view_channel=False,send_messages=False),
             inter.guild.me: discord.PermissionOverwrite(view_channel=True,read_messages=True,send_messages=True),
             inter.user: discord.PermissionOverwrite(view_channel=True,read_messages=True,send_messages=False)}
         channel = await inter.guild.create_text_channel(name=f'다이스 #{len(dc.keys())+1}', category=cg,overwrites=overwrites)
+        await channel.send(embed=dembed("다이스","유저를 찾고 있습니다"),view=dcplay())
         await inter.response.send_message(f"<#{channel.id}>로 이동하세요",ephemeral=True)
         for i in inter.guild.channels:
             if i.name == f'다이스-{len(dc.keys())+1}':
@@ -704,6 +738,7 @@ class bcmenu(discord.ui.View):
                     await i.delete()
         dc[str(channel.id)] = {"name":f'다이스 #{len(dc.keys())+1}',"owner":inter.user.id,"bet":1000,"disabled":False,"users":[inter.user.id]}
         jsave("dice.json",dc)
+        
 
 """
     @discord.ui.button(label="인디언 포커 채널 참가",style=discord.ButtonStyle.green,custom_id="bcmenu:cj")
@@ -726,38 +761,5 @@ class bcmenu(discord.ui.View):
 @commands.is_owner()
 async def 뱃채널메뉴(ctx):
     await ctx.send(embed=dembed("게임","다이스, 인디언 포커 방에 들어가시거나 방을 만드시려면 아래 버튼을 눌러주세요"),view=bcmenu())
-
-@bot.hybrid_command(name="문의",description="티켓을 만들어줍니다.",with_app_command=True)
-async def 문의(ctx):
-    if ctx.channel.name == f"문의-{str(ctx.author.id)}":
-        if ctx.author.guild_permissions.administrator:
-            await ctx.defer()
-            m = await ctx.send(f"채널이 10초 후에 삭제됩니다.")
-            a = 10
-            for i in range(10):
-                await asyncio.sleep(1)
-                a -= 1
-                await m.edit(content=f"채널이 {a}초 후에 삭제됩니다.")
-            await asyncio.sleep(1)
-            return await ctx.channel.delete()
-        else:
-            await ctx.defer(ephemeral=True)
-            await ctx.send("티켓 관리자만 가능합니다.")
-    await ctx.defer(ephemeral=True)
-    for i in ctx.guild.channels:
-        if i.name == str(ctx.author.id):
-            return await ctx.send(embed=dembed("티켓 생성 오류","이미 당신의 티켓이 존재합니다.",discord.Color.red()))
-    pcc = discord.utils.get(ctx.guild.categories,name="티켓")
-    overwrites = {
-        ctx.guild.default_role: discord.PermissionOverwrite(view_channel=False),
-        ctx.author: discord.PermissionOverwrite(view_channel=True,send_messages=True),
-    }
-    pc = await pcc.create_text_channel(
-        f"문의-{ctx.author.id}",overwrites=overwrites
-    )
-    await ctx.send(f"<#{pc.id}>로 이동해주세요.")
-    await pc.send(embed=dembed("티켓 생성 완료","티켓을 생성했습니다!\n문의 내용을 말씀해주세요.\n티켓을 닫으시려면 /문의 를 입력해주세요"))
-    a = await pc.send("@everyone")
-    await a.delete()
 
 bot.run(토큰)
