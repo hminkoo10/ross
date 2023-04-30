@@ -622,14 +622,36 @@ async def 로그(ctx,user:discord.Member):
         await ctx.reply(file=discord.File(f"{path}log/{user.id}.txt"))
     except:
         await ctx.reply("유저가 아직 가입하지 않았습니다")
-"""
+
 class diceplayc(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
     
-    @discord.ui.button(label="게임 시작",style=discord.ButtonStyle.green)
+    @discord.ui.button(label="게임 레디",style=discord.ButtonStyle.green)
     async def diceready(self,inter,button):
-"""
+        dc = jload("dice.json")
+        db = jload("db.json")
+        if inter.user.id in dc[str(inter.channel.id)]["users"]:
+            if not inter.user.id in dc[str(inter.channel.id)]["ready"]:
+                dc[str(inter.channel.id)]["ready"].append(inter.user.id)
+                jsave("dice.json",dc)
+                if sorted(dc[str(inter.channel.id)]["users"]) == sorted(dc[str(inter.channel.id)]["ready"]) and len(dc[str(inter.channel.id)]["users"]) == 2:
+                    return await inter.response.send_message("게임을 시작합니다")
+                await inter.response.send_message(embed=dembed("레디",f"{inter.user.mention}님이 준비하셨습니다\n30초 내에 레디 버튼을 눌러주세요"))
+                await asyncio.sleep(30)
+                if not sorted(dc[str(inter.channel.id)]["users"]) == sorted(dc[str(inter.channel.id)]["ready"]) and len(dc[str(inter.channel.id)]["users"]) == 2:
+                    dc[str(inter.channel.id)]["disabled"] = True
+                    jsave("dice.json",dc)
+                    await inter.channel.send(embed=dembed("채널 삭제","두명 다 30초 안에 레디하지 못하여 방이 3초 후에 삭제됩니다"))
+                    await asyncio.sleep(3)
+                    await inter.channel.delete()
+                    for i in dc[str(inter.channel.id)]["users"]:
+                        db[str(i)]["money"] += dc[str(inter.channel.id)]["bet"]
+                    jsave("db.json",db)
+                    return
+            else:
+                await inter.response.send_message(embed=dembed("실패","이미 준비했습니다"),ephemeral=True)
+
 
     
 
@@ -657,7 +679,7 @@ class dsm(discord.ui.Select):
         elif dc[str(c.id)]["disabled"] == True:
             return await interaction.response.send_message("닫힌 방입니다",ephemeral=True)
         elif dc[str(c.id)]["bet"] > db[str(interaction.user.id)]["money"]:
-            return await interaction.response.send_message(embed=dembed("채널 생성 실패","이 채널의 배팅금액이 보유중인 금액보다 높습니다"),ephemeral=True)
+            return await interaction.response.send_message(embed=dembed("채널 참가 실패","이 채널의 배팅금액이 보유중인 금액보다 높습니다"),ephemeral=True)
         db[str(interaction.user.id)]["money"] -= dc[str(c.id)]["bet"]
         await c.send(f"{interaction.user.mention}님이 채널에 들어오셨습니다")
         await c.set_permissions(interaction.user, send_messages=False,view_channel=True)
@@ -666,6 +688,13 @@ class dsm(discord.ui.Select):
         jsave("db.json",db)
         await interaction.guild.get_thread(dc[str(c.id)]["thread"]).send(interaction.user.mention)
         await interaction.response.send_message(f'<#{c.id}>채널에 입장하셨습니다',ephemeral=True)
+        nowtime = datetime.datetime.now()
+        i = dc[str(c.id)]
+        owner = bot.get_user(i["owner"])
+        lsave(f"log/{interaction.user.id}.txt",f"[ 다이스 채널 참가 ]\n\n{interaction.user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 방장 : {owner}\n배팅금 : {i['bet']}캐시인 다이스 #{self.values[0].split('#')[1]} 방에 입장하셨습니다\n",interaction)
+        if len(dc[str(c.id)]["users"]) == 2:
+            await c.purge()
+            await c.send(embed=dembed("게임 준비","게임을 시작하시려면 두명 다 아래 버튼을 눌러주세요"),view=diceplayc())
         
 
 class diceselect(discord.ui.View):
@@ -710,6 +739,11 @@ class dcplay(discord.ui.View):
         for i in dc[str(inter.channel.id)]["users"]:
             db[str(i)]["money"] += dc[str(inter.channel.id)]["bet"]
         jsave("db.json",db)
+        nowtime = datetime.datetime.now()
+        i = dc[str(inter.channel.id)]
+        owner = bot.get_user(i["owner"])
+        lsave(f"log/{inter.user.id}.txt",f"[ 다이스 채널 퇴장 ]\n\n{inter.user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 방장 : {owner}\n배팅금 : {i['bet']}캐시인 다이스 #{self.values[0].split('#')[1]} 방을 삭제시켰습니다\n",inter)
+        
 
     @discord.ui.button(label="채널 나가기",style=discord.ButtonStyle.gray)
     async def leave_dccn(self,inter,button):
@@ -723,6 +757,10 @@ class dcplay(discord.ui.View):
         await inter.channel.set_permissions(inter.user, send_messages=False,view_channel=False)
         db[str(inter.user.id)]["money"] += dc[str(inter.channel.id)]["bet"]
         jsave("db.json",db)
+        nowtime = datetime.datetime.now()
+        i = dc[str(inter.channel.id)]
+        owner = bot.get_user(i["owner"])
+        lsave(f"log/{inter.user.id}.txt",f"[ 다이스 채널 퇴장 ]\n\n{inter.user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 방장 : {owner}\n배팅금 : {i['bet']}캐시인 다이스 #{self.values[0].split('#')[1]} 방에서 퇴장하셨습니다\n",inter)
         
 
 class bcmenu(discord.ui.View):
@@ -731,6 +769,9 @@ class bcmenu(discord.ui.View):
     @discord.ui.button(label="다이스 채널 참가",style=discord.ButtonStyle.green,custom_id="dice:cj")
     async def dchannel_join(self,inter,button):
         dc = jload("dice.json")
+        db = jload("db.json")
+        if not str(inter.user.id) in list(db.keys()):
+            return await inter.response.send_message(embed=dembed("채널 참가 실패","먼저 가입해주세요"),ephemeral=True)
         a = 0
         for i in list(dc.values()):
             if i["disabled"] == True:
@@ -749,6 +790,8 @@ class bcmenu(discord.ui.View):
             answer = discord.ui.TextInput(label="베팅할 금액을 입력해주세요",style=discord.TextStyle.short,placeholder="1000",required=True,max_length=100)
             async def on_submit(self,ctx):
                 db = jload("db.json")
+                if not str(ctx.user.id) in list(db.keys()):
+                    return await ctx.response.send_message(embed=dembed("채널 생성 실패","먼저 가입해주세요"),ephemeral=True)
                 if int(str(self.answer)) < 0:
                     return await ctx.response.send_message(embed=dembed("채널 생성 실패","배팅금액은 0원 이하가 될 수 없습니다"),ephemeral=True)
                 if int(str(self.answer)) > db[str(ctx.user.id)]["money"]:
@@ -769,6 +812,8 @@ class bcmenu(discord.ui.View):
                 await channel.send(embed=dembed("다이스","유저를 찾고 있습니다"),view=dcplay())
                 thread = await channel.create_thread(name="채팅")
                 await thread.send(ctx.user.mention)
+                nowtime = datetime.datetime.now()
+                lsave(f"log/{ctx.user.id}.txt",f"[ 다이스 채널 생성 ]\n\n{ctx.user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {ctx.user}님이 배팅금액이 {int(str(self.answer))}캐쉬인 다이스 #{len(dc.keys())+1} 방을 만드셨습니다\n",ctx)
                 await ctx.response.send_message(f"<#{channel.id}>로 이동하세요",ephemeral=True)
                 for i in ctx.guild.channels:
                     if i.name == f'다이스-{len(dc.keys())+1}':
