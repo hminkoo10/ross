@@ -47,7 +47,7 @@ def lsave(fn,n,ctx):
     try:
         user = ctx.author
     except:
-        user = ctx.author
+        user = ctx.user
     embed = dembed("로그",n)
     embed.set_author(name="BANK | Log", icon_url=user.avatar.url)
     webhook.send(embed=embed,username=user.name,avatar_url=user.display_avatar)
@@ -360,7 +360,7 @@ class updown(discord.ui.Modal,title="업다운 게임"):
 async def 업다운(ctx):
     if ctx.channel.name != f"개인채널-{str(ctx.author.id)}":
         await ctx.defer(ephemeral=True)
-        return await ctx.send(embed=dembed("게임 시작 실패","``/개인채널``명령어로 개인채널을 생성한 후 개인채널에서 게임을 진행해주세요.",discord.Color.red()))
+        return await ctx.send(embed=dembed("게임 시작 실패","/개인채널명령어로 개인채널을 생성한 후 개인채널에서 게임을 진행해주세요.",discord.Color.red()))
     await ctx.interaction.response.send_modal(updown())
 
 class baccarat(discord.ui.View):
@@ -611,8 +611,8 @@ class baccarat(discord.ui.View):
 async def 바카라(ctx):
     if ctx.channel.name != f"개인채널-{str(ctx.author.id)}":
         await ctx.defer(ephemeral=True)
-        return await ctx.send(embed=dembed("게임 시작 실패","``/개인채널``명령어로 개인채널을 생성한 후 개인채널에서 게임을 진행해주세요.",discord.Color.red()))
-    await ctx.send(embed=dembed("배팅","배팅할 곳을 선택해주세요!\n```Tie : 6.98배, Player : 1.98배, Banker : 1.8배```"),view=baccarat())
+        return await ctx.send(embed=dembed("게임 시작 실패","/개인채널명령어로 개인채널을 생성한 후 개인채널에서 게임을 진행해주세요.",discord.Color.red()))
+    await ctx.send(embed=dembed("배팅","배팅할 곳을 선택해주세요!\n`Tie : 6.98배, Player : 1.98배, Banker : 1.8배`"),view=baccarat())
 
 
 @bot.hybrid_command(name="로그",description="관리자 전용 커맨드입니다.",with_app_command=True)
@@ -645,9 +645,9 @@ class rolldice(discord.ui.View):
                     return await inter.response.send_message(embed=dembed("롤링 실패","이미 다른 유저가 롤링중입니다"),ephemeral=True)
                 dc[str(inter.channel.id)]["rolling"] = True
                 await inter.response.send_message(embed=dembed("롤링","롤링을 시작합니다. 행운을 빕니다!"),ephemeral=True)
-                jsave("dice.json",dc)
                 dc[str(inter.channel.id)]["ready"].append(inter.user.id)
-                message = await inter.original_response()
+                jsave("dice.json",dc)
+                message = await inter.channel.fetch_message(dc[str(inter.channel.id)]["rm"])
                 player1 = bot.get_user(dc[str(inter.channel.id)]["users"][0])
                 player2 = bot.get_user(dc[str(inter.channel.id)]["users"][1])
                 if dc[str(inter.channel.id)]["users"][0] == inter.user.id and len(dc[str(inter.channel.id)]["ready"]) == 1:
@@ -656,19 +656,23 @@ class rolldice(discord.ui.View):
                         if i == 0:
                             m = f"""
 [ {player1} ]    [ {player2} ]
-  {dicee[str(dr)]}   ?   ?        ?   ?   ?
+  {dicee[str(dr)]}   ?   ?    ㅣ    ?   ?   ?
                             """
                         elif i == 1:
+                            drm1 = dc[str(inter.channel.id)]["diceres"][1][i-1]
                             m = f"""
 [ {player1} ]    [ {player2} ]
-  {dicee[str(dr-1)]}   {dicee[str(dr)]}   ?        ?   ?   ?
+  {dicee[str(drm1)]}   {dicee[str(dr)]}   ?    ㅣ    ?   ?   ?
                             """
                         elif i == 2:
+                            drm1 = dc[str(inter.channel.id)]["diceres"][1][i-1]
+                            drm2 = dc[str(inter.channel.id)]["diceres"][1][i-2]
                             m = f"""
 [ {player1} ]    [ {player2} ]
-  {dicee[str(dr-2)]}   {dicee[str(dr-1)]}   {dicee[str(dr)]}        ?   ?   ?
+  {dicee[str(drm2)]}   {dicee[str(drm1)]}   {dicee[str(dr)]}    ㅣ    ?   ?   ?
                             """
                         await message.edit(embed=dembed("다이스",m))
+                        await asyncio.sleep(1.5)
                 elif dc[str(inter.channel.id)]["users"][0] == inter.user.id and len(dc[str(inter.channel.id)]["ready"]) == 2:
                     for i in range(3):
                         dr = dc[str(inter.channel.id)]["diceres"][0][i]
@@ -676,38 +680,46 @@ class rolldice(discord.ui.View):
                         if i == 0:
                             m = f"""
 [ {player1} ]    [ {player2} ]
-  {dicee[str(dr)]}   ?   ?        {dicee[str(odr[0])]}   {dicee[str(odr[1])]}   {dicee[str(odr[2])]}
+  {dicee[str(dr)]}   ?   ?    ㅣ    {dicee[str(odr[0])]}   {dicee[str(odr[1])]}   {dicee[str(odr[2])]}
                             """
                         elif i == 1:
+                            drm1 = dc[str(inter.channel.id)]["diceres"][1][i-1]
                             m = f"""
 [ {player1} ]    [ {player2} ]
-  {dicee[str(dr-1)]}   {dicee[str(dr)]}   ?        {dicee[str(odr[0])]}   {dicee[str(odr[1])]}   {dicee[str(odr[2])]}
+  {dicee[str(drm1)]}   {dicee[str(dr)]}   ?    ㅣ    {dicee[str(odr[0])]}   {dicee[str(odr[1])]}   {dicee[str(odr[2])]}
                             """
                         elif i == 2:
+                            drm1 = dc[str(inter.channel.id)]["diceres"][1][i-1]
+                            drm2 = dc[str(inter.channel.id)]["diceres"][1][i-2]
                             m = f"""
 [ {player1} ]    [ {player2} ]
-  {dicee[str(dr-2)]}   {dicee[str(dr-1)]}   {dicee[str(dr)]}        {dicee[str(odr[0])]}   {dicee[str(odr[1])]}   {dicee[str(odr[2])]}
+  {dicee[str(drm2)]}   {dicee[str(drm1)]}   {dicee[str(dr)]}    ㅣ    {dicee[str(odr[0])]}   {dicee[str(odr[1])]}   {dicee[str(odr[2])]}
                             """
                         await message.edit(embed=dembed("다이스",m))
+                        await asyncio.sleep(1.5)
                 elif dc[str(inter.channel.id)]["users"][1] == inter.user.id and len(dc[str(inter.channel.id)]["ready"]) == 1:
                     for i in range(3):
                         dr = dc[str(inter.channel.id)]["diceres"][1][i]
                         if i == 0:
                             m = f"""
 [ {player1} ]    [ {player2} ]
-  ?   ?   ?        {dicee[str(dr)]}   ?   ?
+  ?   ?   ?    ㅣ    {dicee[str(dr)]}   ?   ?
                             """
                         elif i == 1:
+                            drm1 = dc[str(inter.channel.id)]["diceres"][1][i-1]
                             m = f"""
 [ {player1} ]    [ {player2} ]
-  ?   ?   ?        {dicee[str(dr-1)]}   {dicee[str(dr)]}   ?
+  ?   ?   ?    ㅣ    {dicee[str(drm1)]}   {dicee[str(dr)]}   ?
                             """
                         elif i == 2:
+                            drm1 = dc[str(inter.channel.id)]["diceres"][1][i-1]
+                            drm2 = dc[str(inter.channel.id)]["diceres"][1][i-2]
                             m = f"""
 [ {player1} ]    [ {player2} ]
-  ?   ?   ?        {dicee[str(dr-2)]}   {dicee[str(dr-1)]}   {dicee[str(dr)]}
+  ?   ?   ?    ㅣ    {dicee[str(drm2)]}   {dicee[str(drm1)]}   {dicee[str(dr)]}
                             """
                         await message.edit(embed=dembed("다이스",m))
+                        await asyncio.sleep(1.5)
                 elif dc[str(inter.channel.id)]["users"][1] == inter.user.id and len(dc[str(inter.channel.id)]["ready"]) == 2:
                     for i in range(3):
                         dr = dc[str(inter.channel.id)]["diceres"][1][i]
@@ -715,20 +727,23 @@ class rolldice(discord.ui.View):
                         if i == 0:
                             m = f"""
 [ {player1} ]    [ {player2} ]
-  {dicee[str(odr[0])]}   {dicee[str(odr[1])]}   {dicee[str(odr[2])]}        {dicee[str(dr)]}  ?   ?
+  {dicee[str(odr[0])]}   {dicee[str(odr[1])]}   {dicee[str(odr[2])]}    ㅣ    {dicee[str(dr)]}  ?   ?
                             """
                         elif i == 1:
+                            drm1 = dc[str(inter.channel.id)]["diceres"][1][i-1]
                             m = f"""
 [ {player1} ]    [ {player2} ]
-  {dicee[str(odr[0])]}   {dicee[str(odr[1])]}   {dicee[str(odr[2])]}        {dicee[str(dr-1)]}   {dicee[str(dr)]}   ?
+  {dicee[str(odr[0])]}   {dicee[str(odr[1])]}   {dicee[str(odr[2])]}    ㅣ    {dicee[str(drm1)]}   {dicee[str(dr)]}   ?
                             """
                         elif i == 2:
+                            drm1 = dc[str(inter.channel.id)]["diceres"][1][i-1]
+                            drm2 = dc[str(inter.channel.id)]["diceres"][1][i-2]
                             m = f"""
 [ {player1} ]    [ {player2} ]
-  {dicee[str(odr[0])]}   {dicee[str(odr[1])]}   {dicee[str(odr[2])]}        {dicee[str(dr-2)]}   {dicee[str(dr-1)]}   {dicee[str(dr)]}
+  {dicee[str(odr[0])]}   {dicee[str(odr[1])]}   {dicee[str(odr[2])]}    ㅣ    {dicee[str(drm2)]}   {dicee[str(drm1)]}   {dicee[str(dr)]}
                             """
                         await message.edit(embed=dembed("다이스",m))
-                        await asyncio.sleep(3)
+                        await asyncio.sleep(1.5)
                 dc[str(inter.channel.id)]["rolling"] = False
                 jsave("dice.json",dc)
                 if sorted(dc[str(inter.channel.id)]["users"]) == sorted(dc[str(inter.channel.id)]["ready"]) and len(dc[str(inter.channel.id)]["users"]) == 2:
@@ -757,13 +772,12 @@ class rolldice(discord.ui.View):
                     await asyncio.sleep(15)
                     dc[str(inter.channel.id)]["disabled"] = True
                     jsave("dice.json",dc)
-                    await inter.channel.send(embed=dembed("채널 삭제","채널이 삭제됩니다"))
                     await inter.channel.delete()
+                    return
                 await inter.channel.send(embed=dembed("롤링",f"{inter.user.mention}님이 롤링하셨습니다\n30초 내에 롤링 버튼을 눌러주세요"))
                 await asyncio.sleep(30)
                 if not sorted(dc[str(inter.channel.id)]["users"]) == sorted(dc[str(inter.channel.id)]["ready"]) and len(dc[str(inter.channel.id)]["users"]) == 2:
                     dc[str(inter.channel.id)]["ready"].append(inter.user.id)
-                    message = await inter.original_response()
                     player1 = bot.get_user(dc[str(inter.channel.id)]["users"][0])
                     player2 = bot.get_user(dc[str(inter.channel.id)]["users"][1])
                     if dc[str(inter.channel.id)]["users"][0] == inter.user.id and len(dc[str(inter.channel.id)]["ready"]) == 1:
@@ -772,19 +786,23 @@ class rolldice(discord.ui.View):
                             if i == 0:
                                 m = f"""
 [ {player1} ]    [ {player2} ]
-  {dicee[str(dr)]}   ?   ?        ?   ?   ?
+  {dicee[str(dr)]}   ?   ?    ㅣ    ?   ?   ?
                                 """
                             elif i == 1:
+                                drm1 = dc[str(inter.channel.id)]["diceres"][1][i-1]
                                 m = f"""
 [ {player1} ]    [ {player2} ]
-  {dicee[str(dr-1)]}   {dicee[str(dr)]}   ?        ?   ?   ?
+  {dicee[str(drm1)]}   {dicee[str(dr)]}   ?    ㅣ    ?   ?   ?
                                 """
                             elif i == 2:
+                                drm1 = dc[str(inter.channel.id)]["diceres"][1][i-1]
+                                drm2 = dc[str(inter.channel.id)]["diceres"][1][i-2]
                                 m = f"""
 [ {player1} ]    [ {player2} ]
-  {dicee[str(dr-2)]}   {dicee[str(dr-1)]}   {dicee[str(dr)]}        ?   ?   ?
+  {dicee[str(drm2)]}   {dicee[str(drm1)]}   {dicee[str(dr)]}    ㅣ    ?   ?   ?
                                 """
                             await message.edit(embed=dembed("다이스",m))
+                            await asyncio.sleep(1.5)
                     elif dc[str(inter.channel.id)]["users"][0] == inter.user.id and len(dc[str(inter.channel.id)]["ready"]) == 2:
                         for i in range(3):
                             dr = dc[str(inter.channel.id)]["diceres"][0][i]
@@ -792,38 +810,46 @@ class rolldice(discord.ui.View):
                             if i == 0:
                                 m = f"""
 [ {player1} ]    [ {player2} ]
-  {dicee[str(dr)]}   ?   ?        {dicee[str(odr[0])]}   {dicee[str(odr[1])]}   {dicee[str(odr[2])]}
+  {dicee[str(dr)]}   ?   ?    ㅣ    {dicee[str(odr[0])]}   {dicee[str(odr[1])]}   {dicee[str(odr[2])]}
                                 """
                             elif i == 1:
+                                drm1 = dc[str(inter.channel.id)]["diceres"][1][i-1]
                                 m = f"""
 [ {player1} ]    [ {player2} ]
-  {dicee[str(dr-1)]}   {dicee[str(dr)]}   ?        {dicee[str(odr[0])]}   {dicee[str(odr[1])]}   {dicee[str(odr[2])]}
+  {dicee[str(drm1)]}   {dicee[str(dr)]}   ?    ㅣ    {dicee[str(odr[0])]}   {dicee[str(odr[1])]}   {dicee[str(odr[2])]}
                                 """
                             elif i == 2:
+                                drm1 = dc[str(inter.channel.id)]["diceres"][1][i-1]
+                                drm2 = dc[str(inter.channel.id)]["diceres"][1][i-2]
                                 m = f"""
 [ {player1} ]    [ {player2} ]
-  {dicee[str(dr-2)]}   {dicee[str(dr-1)]}   {dicee[str(dr)]}        {dicee[str(odr[0])]}   {dicee[str(odr[1])]}   {dicee[str(odr[2])]}
+  {dicee[str(drm2)]}   {dicee[str(drm1)]}   {dicee[str(dr)]}    ㅣ    {dicee[str(odr[0])]}   {dicee[str(odr[1])]}   {dicee[str(odr[2])]}
                                 """
                             await message.edit(embed=dembed("다이스",m))
+                            await asyncio.sleep(1.5)
                     elif dc[str(inter.channel.id)]["users"][1] == inter.user.id and len(dc[str(inter.channel.id)]["ready"]) == 1:
                         for i in range(3):
                             dr = dc[str(inter.channel.id)]["diceres"][1][i]
                             if i == 0:
                                 m = f"""
 [ {player1} ]    [ {player2} ]
-  ?   ?   ?        {dicee[str(dr)]}   ?   ?
+  ?   ?   ?    ㅣ    {dicee[str(dr)]}   ?   ?
                                 """
                             elif i == 1:
+                                drm1 = dc[str(inter.channel.id)]["diceres"][1][i-1]
                                 m = f"""
 [ {player1} ]    [ {player2} ]
-  ?   ?   ?        {dicee[str(dr-1)]}   {dicee[str(dr)]}   ?
+  ?   ?   ?    ㅣ    {dicee[str(drm1)]}   {dicee[str(dr)]}   ?
                                 """
                             elif i == 2:
+                                drm1 = dc[str(inter.channel.id)]["diceres"][1][i-1]
+                                drm2 = dc[str(inter.channel.id)]["diceres"][1][i-2]
                                 m = f"""
 [ {player1} ]    [ {player2} ]
-  ?   ?   ?        {dicee[str(dr-2)]}   {dicee[str(dr-1)]}   {dicee[str(dr)]}
+  ?   ?   ?    ㅣ    {dicee[str(drm2)]}   {dicee[str(drm1)]}   {dicee[str(dr)]}
                                 """
                             await message.edit(embed=dembed("다이스",m))
+                            await asyncio.sleep(1.5)
                     elif dc[str(inter.channel.id)]["users"][1] == inter.user.id and len(dc[str(inter.channel.id)]["ready"]) == 2:
                         for i in range(3):
                             dr = dc[str(inter.channel.id)]["diceres"][1][i]
@@ -831,20 +857,23 @@ class rolldice(discord.ui.View):
                             if i == 0:
                                 m = f"""
 [ {player1} ]    [ {player2} ]
-  {dicee[str(odr[0])]}   {dicee[str(odr[1])]}   {dicee[str(odr[2])]}        {dicee[str(dr)]}  ?   ?
+  {dicee[str(odr[0])]}   {dicee[str(odr[1])]}   {dicee[str(odr[2])]}    ㅣ    {dicee[str(dr)]}  ?   ?
                                 """
                             elif i == 1:
+                                drm1 = dc[str(inter.channel.id)]["diceres"][1][i-1]
                                 m = f"""
 [ {player1} ]    [ {player2} ]
-  {dicee[str(odr[0])]}   {dicee[str(odr[1])]}   {dicee[str(odr[2])]}        {dicee[str(dr-1)]}   {dicee[str(dr)]}   ?
+  {dicee[str(odr[0])]}   {dicee[str(odr[1])]}   {dicee[str(odr[2])]}    ㅣ    {dicee[str(drm1)]}   {dicee[str(dr)]}   ?
                                 """
                             elif i == 2:
+                                drm1 = dc[str(inter.channel.id)]["diceres"][1][i-1]
+                                drm2 = dc[str(inter.channel.id)]["diceres"][1][i-2]
                                 m = f"""
 [ {player1} ]    [ {player2} ]
-  {dicee[str(odr[0])]}   {dicee[str(odr[1])]}   {dicee[str(odr[2])]}        {dicee[str(dr-2)]}   {dicee[str(dr-1)]}   {dicee[str(dr)]}
+  {dicee[str(odr[0])]}   {dicee[str(odr[1])]}   {dicee[str(odr[2])]}    ㅣ    {dicee[str(drm2)]}   {dicee[str(drm1)]}   {dicee[str(dr)]}
                                 """
                             await message.edit(embed=dembed("다이스",m))
-                            await asyncio.sleep(3)
+                            await asyncio.sleep(1.5)
                     jsave("dice.json",dc)
                     if sorted(dc[str(inter.channel.id)]["users"]) == sorted(dc[str(inter.channel.id)]["ready"]) and len(dc[str(inter.channel.id)]["users"]) == 2:
                         player1res = 0
@@ -860,13 +889,15 @@ class rolldice(discord.ui.View):
                             jsave("db.json",db)
                         elif player1res > player2res:
                             u = bot.get_user(dc[str(inter.channel.id)]["users"][0])
-                            await inter.channel.send(embed=dembed("방장 승리",f"{u.mention}님이 승리하셨습니다! 배팅금의 2배를 잔고에 넣어드리겠습니다"))
-                            db[str(dc[str(inter.channel.id)]["users"][0])]["money"] += (dc[str(inter.channel.id)]["bet"])*2
+                            await inter.channel.send(embed=dembed("방장 승리",f"{u.mention}님이 승리하셨습니다! 배팅금의 1.95배를 잔고에 넣어드리겠습니다"))
+                            db[str(dc[str(inter.channel.id)]["users"][0])]["money"] += (dc[str(inter.channel.id)]["bet"])
+                            db[str(dc[str(inter.channel.id)]["users"][0])]["money"] += (dc[str(inter.channel.id)]["bet"])*0.95
                             jsave("db.json",db)
                         elif player1res < player2res:
                             u = bot.get_user(dc[str(inter.channel.id)]["users"][1])
-                            await inter.channel.send(embed=dembed("참가자 승리",f"{u.mention}님이 승리하셨습니다! 배팅금의 2배를 잔고에 넣어드리겠습니다"))
-                            db[str(dc[str(inter.channel.id)]["users"][1])]["money"] += (dc[str(inter.channel.id)]["bet"])*2
+                            await inter.channel.send(embed=dembed("참가자 승리",f"{u.mention}님이 승리하셨습니다! 배팅금의 1.95배를 잔고에 넣어드리겠습니다"))
+                            db[str(dc[str(inter.channel.id)]["users"][1])]["money"] += (dc[str(inter.channel.id)]["bet"])
+                            db[str(dc[str(inter.channel.id)]["users"][1])]["money"] += (dc[str(inter.channel.id)]["bet"])*0.95
                             jsave("db.json",db)
                         await inter.channel.send(embed=dembed("채널 삭제","채널이 15초 후에 닫힙니다"))
                         await asyncio.sleep(15)
@@ -890,17 +921,24 @@ class diceplayc(discord.ui.View):
                 dc[str(inter.channel.id)]["ready"].append(inter.user.id)
                 jsave("dice.json",dc)
                 if sorted(dc[str(inter.channel.id)]["users"]) == sorted(dc[str(inter.channel.id)]["ready"]) and len(dc[str(inter.channel.id)]["users"]) == 2:
-                    dc[str(inter.channel.id)]["ready"].clear()
+                    dc[str(inter.channel.id)]["ready"] = []
                     player1 = bot.get_user(dc[str(inter.channel.id)]["users"][0])
                     player2 = bot.get_user(dc[str(inter.channel.id)]["users"][1])
                     m = f"""
-[ {player1} ]    [ {player2} ]
-  ?   ?   ?        ?   ?   ?
+
+[ {player1} ]     [ {player2} ]
+  ?   ?   ?    ㅣ    ?   ?   ?
+
                     """
-                    return await inter.response.send_message(embed=dembed("다이스",m))
+                    await inter.response.send_message(embed=dembed("다이스",m),view=rolldice())
+                    a = await inter.original_response()
+                    dc[str(inter.channel.id)]["rm"] = a.id
+                    jsave("dice.json",dc)
+                    return
                 await inter.response.send_message(embed=dembed("레디",f"{inter.user.mention}님이 준비하셨습니다\n30초 내에 레디 버튼을 눌러주세요"))
                 await asyncio.sleep(30)
-                if not sorted(dc[str(inter.channel.id)]["users"]) == sorted(dc[str(inter.channel.id)]["ready"]) and len(dc[str(inter.channel.id)]["users"]) == 2:
+                dc = jload("dice.json")
+                if not sorted(dc[str(inter.channel.id)]["users"]) == sorted(dc[str(inter.channel.id)]["ready"]) and len(dc[str(inter.channel.id)]["users"]) == 2 and dc[str(inter.channel.id)]["rm"] == 0:
                     dc[str(inter.channel.id)]["disabled"] = True
                     jsave("dice.json",dc)
                     await inter.channel.send(embed=dembed("채널 삭제","두명 다 30초 안에 레디하지 못하여 방이 3초 후에 삭제됩니다"))
@@ -1074,8 +1112,8 @@ class bcmenu(discord.ui.View):
                 thread = await channel.create_thread(name="채팅")
                 await thread.send(ctx.user.mention)
                 nowtime = datetime.datetime.now()
-                lsave(f"log/{ctx.user.id}.txt",f"[ 다이스 채널 생성 ]\n\n{ctx.user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {ctx.user}님이 배팅금액이 {int(str(self.answer))}캐쉬인 다이스 #{len(dc.keys())+1} 방을 만드셨습니다\n",ctx)
                 await ctx.response.send_message(f"<#{channel.id}>로 이동하세요",ephemeral=True)
+                lsave(f"log/{ctx.user.id}.txt",f"[ 다이스 채널 생성 ]\n\n{ctx.user}님이 {nowtime.year}년 {nowtime.month}월 {nowtime.day}일 {nowtime.hour}시 {nowtime.minute}분 {nowtime.second}초에 {ctx.user}님이 배팅금액이 {int(str(self.answer))}캐쉬인 다이스 #{len(dc.keys())+1} 방을 만드셨습니다\n",ctx)
                 for i in ctx.guild.channels:
                     if i.name == f'다이스-{len(dc.keys())+1}':
                         if i.id != channel.id:
@@ -1084,7 +1122,7 @@ class bcmenu(discord.ui.View):
                 for n in range(2):
                     for i in range(3):
                         diceres[n].append(random.randint(1,6))
-                dc[str(channel.id)] = {"name":f'다이스 #{len(dc.keys())+1}',"owner":ctx.user.id,"bet":int(str(self.answer)),"disabled":False,"users":[inter.user.id],"ready":[],"thread":thread.id,"diceres":diceres,"rolling":False}
+                dc[str(channel.id)] = {"name":f'다이스 #{len(dc.keys())+1}',"owner":ctx.user.id,"bet":int(str(self.answer)),"disabled":False,"users":[inter.user.id],"ready":[],"thread":thread.id,"diceres":diceres,"rolling":False,"rm":0}
                 jsave("db.json",db)
                 jsave("dice.json",dc)
         await inter.response.send_modal(createdicechannel())
